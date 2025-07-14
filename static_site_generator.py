@@ -1,70 +1,61 @@
-'''
-WIP: deshittification coming soon.
-
-A simple static site generator for my GitHub pages site. 
+"""
+A simple static site generator for my GitHub pages site.
 
 1. Place new markdown file in the articles directory.
 
-2. Run this python script. The html directory will be updated with a new page and the 
-'''
+2. Run this python script. The html directory will be updated with a new page and the
+"""
 
 import os
 
 import mistune
-import jinja2
+from jinja2 import Environment, Template, FileSystemLoader
+
+def extract_file_names(cwd: str) -> list[str]:
+    paths = os.listdir(os.path.join(cwd, "articles"))
+    return [file_name for file_name in paths if file_name.endswith(".md")]
 
 
-HTML = str
-
-
-environment = jinja2.Environment(loader=jinja2.FileSystemLoader("templates/"))
-template = environment.get_template("article_template.html")
-index_template = environment.get_template("index_template.html")
-
-def extract_article_paths(cwd: str) -> list[str]:
-    articles = []
-    for file_name in os.listdir(os.path.join(cwd, 'articles')):
-        if file_name.endswith('.md'):
-            articles.append(file_name)
-    return articles
-
-
-def parse_article(cwd: str, file_name: str) -> HTML:
-    '''Parse the article in the articles directory and insert into a html template.'''
-    with open(os.path.join(cwd, 'articles', file_name), 'r') as f:
+def parse_article(cwd: str, file_name: str, article_template: Template):
+    """Parse the article in the articles directory and insert into a html template."""
+    with open(os.path.join(cwd, "articles", file_name), "r") as f:
         content = mistune.html(f.read())
-    title = file_name.split('/')[-1]   
 
-    new_title = title.replace('.md','.html')
-    rendered = template.render(
-        title=title.removesuffix('.md'),
+    rendered = article_template.render(
+        title=file_name.removesuffix(".md"),
         content=content,
     )
-    with open(os.path.join(cwd, 'html', new_title), mode='w', encoding="utf-8") as message:
+
+    new_title = file_name.replace(".md", ".html")
+    with open(
+        os.path.join(cwd, "html", new_title), mode="w", encoding="utf-8"
+    ) as message:
         message.write(rendered)
 
 
-def update_index(cwd: str, file_names: list[str]):
-    '''Update the index page with a list of all articles present'''
-    
+def update_index(cwd: str, file_names: list[str], index_template: Template):
+    """Update the index page with a list of all articles present"""
+
     rendered = index_template.render(
-        articles=[file_name.replace('.md', '.html') for file_name in file_names],
+        articles=[file_name.replace(".md", ".html") for file_name in file_names],
     )
 
-    with open(os.path.join(cwd, "index.html"), mode='w', encoding="utf-8") as message:
+    with open(os.path.join(cwd, "index.html"), mode="w", encoding="utf-8") as message:
         message.write(rendered)
-    
 
 
 def generate_static_site():
+    environment = Environment(loader=FileSystemLoader("templates/"))
+    article_template = environment.get_template("article_template.html")
+    index_template = environment.get_template("index_template.html")
     cwd = os.getcwd()
 
-    article_paths = extract_article_paths(cwd)
+    file_names = extract_file_names(cwd)
 
-    for path in article_paths:
-        parse_article(cwd, path)
+    for name in file_names:
+        parse_article(cwd, name, article_template)
 
-    update_index(cwd, article_paths)
+    update_index(cwd, file_names, index_template)
 
 
 if __name__ == "__main__":
