@@ -23,11 +23,11 @@
         <ul>
             <h1>Jay's Blog</h1>
             <br>
-            
+            {% for article in articles %}
             <li>
-                <a href="html/my_fake_article.html">my_fake_article.html</a>
+                <a href="html/{{ article }}">{{ article }}</a>
             </li>
-            
+            {% endfor %}
         </ul>
     </body>
 </html>
